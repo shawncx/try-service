@@ -22,7 +22,7 @@ result_fields = {
     'username': fields.String
 }
 
-@marshal_with(result_fields, envelope='resource')
+@marshal_with(result_fields)
 def check_login(username, password):
     time.sleep(1)
     users = filter(lambda u: u['username'] == username, fake_user)
