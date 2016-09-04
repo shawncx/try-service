@@ -7,26 +7,45 @@ api = Api(app)
 
 fake_tickets = [
     {
+        'no': 123,
+        'title': '[AD/LDAP]CN not found',
+        'developManDay': 10,
+        'developProgress': 0.3,
+        'evaluationManDay': 5,
+        'evaluationProgress': 0,
+        'milestone': '12-VerUp',
         'leader': 'chen_xi',
-        'tickets': [
-            {
-                'no': 123,
-                'title': '[AD/LDAP]CN not found',
-                'developManDay': 10,
-                'developProgress': 0.3,
-                'evaluationManDay': 5,
-                'evaluationProgress': 0,
-            },
-            {
-                'no': 124,
-                'title': '[GoogleApps]Account is deleted',
-                'developManDay': 15,
-                'developProgress': 0,
-                'evaluationManDay': 10,
-                'evaluationProgress': 0,
-            }
-        ]
-    }
+    },
+    {
+        'no': 124,
+        'title': '[GoogleApps]Account is deleted',
+        'developManDay': 15,
+        'developProgress': 0,
+        'evaluationManDay': 10,
+        'evaluationProgress': 0,
+        'milestone': '12-VerUp',
+        'leader': 'chen_xi',
+    },
+    {
+        'no': 125,
+        'title': '[Output]Hashcode mismatch',
+        'developManDay': 10,
+        'developProgress': 0,
+        'evaluationManDay': 10,
+        'evaluationProgress': 0,
+        'milestone': '10-PTF',
+        'leader': 'chen_xi',
+    },
+    {
+        'no': 125,
+        'title': '[Workflow]Approve blank node',
+        'developManDay': 10,
+        'developProgress': 0,
+        'evaluationManDay': 10,
+        'evaluationProgress': 0,
+        'milestone': '12-VerUp',
+        'leader': 'Kawasaki',
+    },
 ]
 
 nested_ticket = {
@@ -36,6 +55,8 @@ nested_ticket = {
     'developProgress': fields.Float,
     'evaluationManDay': fields.Integer,
     'evaluationProgress': fields.Float,
+    'leader': fields.String,
+    'milestone': fields.String,
 }
 
 result_fields = {
@@ -45,17 +66,17 @@ result_fields = {
 }
 
 @marshal_with(result_fields)
-def fetch_ticket_list(leader):
-    time.sleep(2)
-    tickets = filter(lambda t: t['leader'] == leader, fake_tickets)
+def fetch_ticket_list(leader, milestone):
+    tickets = filter(lambda t: t['leader'] == leader and t['milestone'] == milestone,
+                     fake_tickets)
     if len(tickets):
-        return {'isSuccess': True, 'message': None, 'tickets': tickets[0]['tickets']}
+        return {'isSuccess': True, 'message': None, 'tickets': tickets[0]}
     else:
         return {'isSuccess': True, 'message': None, 'tickets': []}
 
 class TicketList(Resource):
-    def get(self, leader):
-        return fetch_ticket_list(leader)
+    def get(self, leader, milestone):
+        return fetch_ticket_list(leader, milestone)
 
 
 
