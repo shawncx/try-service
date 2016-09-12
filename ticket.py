@@ -67,8 +67,8 @@ result_fields = {
 
 @marshal_with(result_fields)
 def fetch_ticket_list(leader, milestone):
-    tickets = filter(lambda t: t['leader'] == leader and t['milestone'] == milestone,
-                     fake_tickets)
+    tickets = []
+    tickets.append(filter(lambda t: t['leader'] == leader and t['milestone'] == milestone, fake_tickets))
     if len(tickets):
         return {'isSuccess': True, 'message': None, 'tickets': tickets[0]}
     else:
