@@ -26,6 +26,7 @@ result_field = {
     'milestones': fields.Nested(nested_milestone)
 }
 
+
 @marshal_with(result_field)
 def fetch_milestone_list():
     return {
@@ -33,6 +34,7 @@ def fetch_milestone_list():
         'message': None,
         'milestones': fake_milestones
     }
+
 
 class MilestoneList(Resource):
     def get(self):

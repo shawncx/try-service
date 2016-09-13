@@ -1,6 +1,6 @@
 from login import Login
 from milestone import MilestoneList
-from ticket import TicketList
+from workload import WorkloadList
 from flask import Flask
 from flask_restful import Api
 
@@ -9,7 +9,8 @@ api = Api(app)
 
 api.add_resource(Login, '/login/<string:username>/<string:password>')
 api.add_resource(MilestoneList, '/milestoneList')
-api.add_resource(TicketList, '/ticketList/<string:leader>/<string:milestone>')
+api.add_resource(WorkloadList, '/workloadList/<string:team>/<string:milestone>')
+
 
 @app.after_request
 def after_request(response):
