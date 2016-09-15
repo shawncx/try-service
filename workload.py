@@ -150,6 +150,14 @@ result_fields = {
     'evaluationWorkload': fields.Nested(nested_workload),
 }
 
+DEFAULT_WORKLOAD = {
+    'totalAvailable': 0,
+    'totalSupport': 0,
+    'totalCost': 0,
+    'totalRemain': 0,
+    'personalWorkloads': [],
+}
+
 
 @marshal_with(result_fields)
 def fetch_workload_list(team, milestone):
@@ -159,7 +167,8 @@ def fetch_workload_list(team, milestone):
             workload = w
             break
     if workload is None:
-        return {'isSuccess': True, 'message': None, 'tickets': [], 'developmentWorkload': None, 'evaluationWorkload': None}
+        return {'isSuccess': True, 'message': None, 'tickets': [], 'developmentWorkload': DEFAULT_WORKLOAD,
+                'evaluationWorkload': DEFAULT_WORKLOAD}
 
     tickets = filter(lambda t: t['workloadId'] == workload['id'], fake_tickets)
 
@@ -204,5 +213,3 @@ def fetch_workload_list(team, milestone):
 class WorkloadList(Resource):
     def get(self, team, milestone):
         return fetch_workload_list(team, milestone)
-
-
