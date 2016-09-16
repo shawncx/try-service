@@ -1,20 +1,12 @@
 from flask import Flask
-from flask_restful import Api, Resource, fields, marshal_with
+from flask_restful import reqparse, Api, Resource, fields, marshal_with
 
 app = Flask(__name__)
 api = Api(app)
 
-fake_workloads = [
-    {
-        'id': 1,
-        'team': 'Connector',
-        'milestone': '12-VerUp',
-    },
-]
-
 fake_tickets = [
     {
-        'workloadId': 1,
+        'milestone': '12-VerUp',
         'no': 123,
         'title': '[AD/LDAP]CN not found',
         'developer': 'chen_xi',
@@ -23,20 +15,22 @@ fake_tickets = [
         'developmentProgress': 0.3,
         'evaluationManDay': 5,
         'evaluationProgress': 0,
+        'team': 'Connector',
     },
     {
-        'workloadId': 1,
+        'milestone': '12-VerUp',
         'no': 124,
         'title': '[GoogleApps]Account is deleted',
-        'developer': 'chen_xi',
-        'evaluator': 'luo yi',
+        'developer': 'luo yi',
+        'evaluator': 'chen_xi',
         'developmentManDay': 15,
         'developmentProgress': 0,
         'evaluationManDay': 10,
         'evaluationProgress': 0,
+        'team': 'Connector',
     },
     {
-        'workloadId': 1,
+        'milestone': '12-VerUp',
         'no': 125,
         'title': '[Output]Hashcode mismatch',
         'developer': 'chen_xi',
@@ -45,9 +39,10 @@ fake_tickets = [
         'developmentProgress': 0,
         'evaluationManDay': 10,
         'evaluationProgress': 0,
+        'team': 'Connector',
     },
     {
-        'workloadId': 1,
+        'milestone': '12-VerUp',
         'no': 125,
         'title': '[Workflow]Approve blank node',
         'developer': 'chen_xi',
@@ -56,62 +51,7 @@ fake_tickets = [
         'developmentProgress': 0,
         'evaluationManDay': 10,
         'evaluationProgress': 0,
-    },
-]
-
-fake_workload_summary = [
-    {
-        'workloadId': 1,
-        'id': 1,
-        'phrase': 'development',
-        'available': 100,
-        'support': 20,
-        'cost': 60,
-        'remain': 20,
-    },
-    {
-        'workloadId': 1,
-        'id': 2,
-        'phrase': 'evaluation',
-        'available': 80,
-        'support': 15,
-        'cost': 50,
-        'remain': 10,
-    }
-]
-
-fake_personal_workload = [
-    {
-        'summaryId': 1,
-        'name': 'chen_xi',
-        'available': 50,
-        'support': 10,
-        'cost': 30,
-        'remain': 10,
-    },
-    {
-        'summaryId': 1,
-        'name': 'luo yi',
-        'available': 50,
-        'support': 10,
-        'cost': 30,
-        'remain': 10,
-    },
-    {
-        'summaryId': 2,
-        'name': 'chen_xi',
-        'available': 50,
-        'support': 10,
-        'cost': 30,
-        'remain': 10,
-    },
-    {
-        'summaryId': 2,
-        'name': 'luo yi',
-        'available': 50,
-        'support': 10,
-        'cost': 30,
-        'remain': 10,
+        'team': 'Connector',
     },
 ]
 
@@ -150,66 +90,99 @@ result_fields = {
     'evaluationWorkload': fields.Nested(nested_workload),
 }
 
-DEFAULT_WORKLOAD = {
-    'totalAvailable': 0,
-    'totalSupport': 0,
-    'totalCost': 0,
-    'totalRemain': 0,
-    'personalWorkloads': [],
-}
+
+@marshal_with(result_fields)
+def fetch_workload_list(team, milestone_title):
+    tickets = filter(lambda t: t['team'] == team and t['milestone'] == milestone_title, fake_tickets)
+    milestone = fetch_milestion(milestone_title)
+    dev_workload = cal_workload(team, milestone, 'development')
+    eval_workload = cal_workload(team, milestone, 'evaluation')
+    return {
+        'isSuccess': True,
+        'tickets': tickets,
+        'developmentWorkload': dev_workload,
+        'evaluationWorkload': eval_workload,
+    }
+
+
+def fetch_milestion(title):
+    return {
+        'title': '12-VerUp',
+        'developmentStartDate': '2016-09-15',
+        'developmentEndDate': '2016-11-11',
+        'evaluationStartDate': '2016-11-14',
+        'evaluationEndDate': '2016-12-09',
+        'totalAvailableManDay': 100,
+        'developmentAvailableManDay': 80,
+        'evaluationAvailableManDay': 20,
+        'supportRatio': 0.2,
+    }
 
 
 @marshal_with(result_fields)
-def fetch_workload_list(team, milestone):
-    workload = None
-    for w in fake_workloads:
-        if w['team'] == team and w['milestone'] == milestone:
-            workload = w
-            break
-    if workload is None:
-        return {'isSuccess': True, 'message': None, 'tickets': [], 'developmentWorkload': DEFAULT_WORKLOAD,
-                'evaluationWorkload': DEFAULT_WORKLOAD}
-
-    tickets = filter(lambda t: t['workloadId'] == workload['id'], fake_tickets)
-
-    for s in fake_workload_summary:
-        if s['workloadId'] == workload['id']:
-            if s['phrase'] == 'development':
-                dev_summary = s
-            elif s['phrase'] == 'evaluation':
-                eval_summary = s
-
-    dev_personal_workload = filter(lambda pw: pw['summaryId'] == dev_summary['id'], fake_personal_workload) \
-        if dev_summary is not None else None
-    eval_personal_workload = filter(lambda pw: pw['summaryId'] == eval_summary['id'], fake_personal_workload) \
-        if eval_summary is not None else None
-
-    if dev_summary is not None:
-        dev_workload = {
-            'totalAvailable': dev_summary['available'],
-            'totalSupport': dev_summary['support'],
-            'totalCost': dev_summary['cost'],
-            'totalRemain': dev_summary['remain'],
-            'personalWorkloads': dev_personal_workload,
-        }
-
-    if eval_summary is not None:
-        eval_workload = {
-            'totalAvailable': eval_summary['available'],
-            'totalSupport': eval_summary['support'],
-            'totalCost': eval_summary['cost'],
-            'totalRemain': eval_summary['remain'],
-            'personalWorkloads': eval_personal_workload,
-        }
+def update_ticket(ticket):
+    tickets = filter(lambda t: t['no'] == ticket['no'], fake_tickets)
+    if len(tickets):
+        tickets[0]['developmentManDay'], tickets[0]['developmentProgress'], tickets[0]['evaluationManDay'], tickets[0][
+            'evaluationProgress'] = ticket['developmentManDay'], ticket['developmentProgress'], ticket[
+            'evaluationManDay'], ticket['evaluationProgress']
+    else:
+        fake_tickets.append(ticket)
     return {
         'isSuccess': True,
-        'message': None,
-        'tickets': tickets,
-        'developmentWorkload': dev_workload,
-        'evaluationWorkload': eval_workload
+    }
+
+
+def cal_workload(team, milestone, term):
+    tickets = filter(lambda t: t['team'] == team and t['milestone'] == milestone['title'], fake_tickets)
+    personal_workloads = {}
+    total_cost = 0
+    for ticket in tickets:
+        (target_person, target_cost) = (ticket['developer'], ticket['developmentManDay']) if term == 'development' \
+            else (ticket['evaluator'], ticket['evaluationManDay'])
+        if personal_workloads.get(target_person):
+            personal_workloads[target_person]['available'] = milestone['totalAvailableManDay']
+            personal_workloads[target_person]['support'] = milestone['totalAvailableManDay'] * milestone['supportRatio']
+            personal_workloads[target_person]['cost'] += target_cost
+            personal_workloads[target_person]['remain'] -= target_cost
+            total_cost += target_cost
+        else:
+            remain = milestone['totalAvailableManDay'] * milestone['supportRatio']
+            personal_workloads[target_person] = {
+                'name': target_person,
+                'available': milestone['totalAvailableManDay'],
+                'support': remain,
+                'cost': target_cost,
+                'remain': milestone['totalAvailableManDay'] - target_cost - remain,
+            }
+            total_cost += target_cost
+
+    total_available = milestone['totalAvailableManDay'] * len(personal_workloads)
+    total_support = total_available * milestone['supportRatio']
+    total_remain = total_available - total_support - total_cost
+
+    return {
+        'totalAvailable': total_available,
+        'totalSupport': total_support,
+        'totalCost': total_cost,
+        'totalRemain': total_remain,
+        'personalWorkloads': personal_workloads.values(),
     }
 
 
 class WorkloadList(Resource):
     def get(self, team, milestone):
         return fetch_workload_list(team, milestone)
+
+
+class Ticket(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser()
+        self.reqparse.add_argument('title', type=str, location='json')
+
+
+    def post(self):
+        args = parser.parse_args()
+        print args
+        return update_ticket(args)
+
