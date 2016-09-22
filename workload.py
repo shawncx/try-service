@@ -1,8 +1,8 @@
-from flask import Flask
-from flask_restful import reqparse, Api, Resource, fields, marshal_with
-
-app = Flask(__name__)
-api = Api(app)
+# -*- coding: utf-8 -*-
+from flask import request, jsonify
+from flask_restful import reqparse, Resource
+import uuid
+from csv import DictReader
 
 fake_tickets = [
     {
@@ -55,55 +55,6 @@ fake_tickets = [
     },
 ]
 
-nested_ticket = {
-    'no': fields.Integer,
-    'title': fields.String,
-    'developer': fields.String,
-    'evaluator': fields.String,
-    'developmentManDay': fields.Integer,
-    'developmentProgress': fields.Float,
-    'evaluationManDay': fields.Integer,
-    'evaluationProgress': fields.Float,
-}
-
-nested_personal_workload = {
-    'name': fields.String,
-    'available': fields.Float,
-    'support': fields.Float,
-    'cost': fields.Float,
-    'remain': fields.Float,
-}
-
-nested_workload = {
-    'totalAvailable': fields.Float,
-    'totalSupport': fields.Float,
-    'totalCost': fields.Float,
-    'totalRemain': fields.Float,
-    'personalWorkloads': fields.Nested(nested_personal_workload),
-}
-
-result_fields = {
-    'isSuccess': fields.Boolean,
-    'message': fields.String,
-    'tickets': fields.Nested(nested_ticket),
-    'developmentWorkload': fields.Nested(nested_workload),
-    'evaluationWorkload': fields.Nested(nested_workload),
-}
-
-
-@marshal_with(result_fields)
-def fetch_workload_list(team, milestone_title):
-    tickets = filter(lambda t: t['team'] == team and t['milestone'] == milestone_title, fake_tickets)
-    milestone = fetch_milestion(milestone_title)
-    dev_workload = cal_workload(team, milestone, 'development')
-    eval_workload = cal_workload(team, milestone, 'evaluation')
-    return {
-        'isSuccess': True,
-        'tickets': tickets,
-        'developmentWorkload': dev_workload,
-        'evaluationWorkload': eval_workload,
-    }
-
 
 def fetch_milestion(title):
     return {
@@ -116,20 +67,6 @@ def fetch_milestion(title):
         'developmentAvailableManDay': 80,
         'evaluationAvailableManDay': 20,
         'supportRatio': 0.2,
-    }
-
-
-@marshal_with(result_fields)
-def update_ticket(ticket):
-    tickets = filter(lambda t: t['no'] == ticket['no'], fake_tickets)
-    if len(tickets):
-        tickets[0]['developmentManDay'], tickets[0]['developmentProgress'], tickets[0]['evaluationManDay'], tickets[0][
-            'evaluationProgress'] = ticket['developmentManDay'], ticket['developmentProgress'], ticket[
-            'evaluationManDay'], ticket['evaluationProgress']
-    else:
-        fake_tickets.append(ticket)
-    return {
-        'isSuccess': True,
     }
 
 
@@ -172,17 +109,82 @@ def cal_workload(team, milestone, term):
 
 class WorkloadList(Resource):
     def get(self, team, milestone):
-        return fetch_workload_list(team, milestone)
+        tickets = filter(lambda t: t['team'] == team and t['milestone'] == milestone, fake_tickets)
+        milestone = fetch_milestion(milestone)
+        dev_workload = cal_workload(team, milestone, 'development')
+        eval_workload = cal_workload(team, milestone, 'evaluation')
+        return jsonify({
+            'isSuccess': True,
+            'tickets': tickets,
+            'developmentWorkload': dev_workload,
+            'evaluationWorkload': eval_workload,
+        })
 
 
 class Ticket(Resource):
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        self.reqparse.add_argument('title', type=str, location='json')
-
+        self.parser.add_argument('ticket', type=dict, location='json')
+        super(Ticket, self).__init__()
 
     def post(self):
-        args = parser.parse_args()
-        print args
-        return update_ticket(args)
+        args = self.parser.parse_args()
+        ticket = args['ticket']
+        tickets = filter(lambda t: t['no'] == ticket['no'], fake_tickets)
+        if len(tickets):
+            tickets[0]['developmentManDay'] = ticket['developmentManDay']
+            tickets[0]['developmentProgress'] = ticket['developmentProgress']
+            tickets[0]['evaluationManDay'] = ticket['evaluationManDay']
+            tickets[0]['evaluationProgress'] = ticket['evaluationProgress']
+        else:
+            fake_tickets.append(ticket)
+        return jsonify({
+            'isSuccess': True
+        })
 
+
+class TicketList(Resource):
+    def post(self):
+        import resource
+        csv_file = request.files.get('ticketList')
+        milestone = request.form.get('milestone')
+        team = request.form.get('team')
+        mode = request.form.get('mode')
+        file_name = str(uuid.uuid4()) + '.csv'
+        resource.uploads.save(csv_file, name=file_name)
+        upload_tickets = []
+        with open(resource.app.config['UPLOADED_UPLOADS_DEST'] + '/' + file_name, 'rb') as saved_file:
+            reader = DictReader(saved_file)
+            for row in reader:
+                no = row['チケットNo']
+                title = row['概要']
+                developer = row['開発担当者']
+                evaluator = row['評価担当者']
+                existed_ticket = filter(lambda t: t['no'] == no, fake_tickets)
+                if len(existed_ticket):
+                    existed_ticket[0]['title'] = title
+                    existed_ticket[0]['developer'] = developer
+                    existed_ticket[0]['evaluator'] = evaluator
+                    upload_tickets.append(existed_ticket[0])
+                else:
+                    new_ticket = {
+                        'milestone': milestone,
+                        'no': int(no),
+                        'title': title,
+                        'developer': developer,
+                        'evaluator': evaluator,
+                        'developmentManDay': 0,
+                        'developmentProgress': 0,
+                        'evaluationManDay': 0,
+                        'evaluationProgress': 0,
+                        'team': team,
+                    }
+                    fake_tickets.append(new_ticket)
+                    upload_tickets.append(new_ticket)
+        if mode == 'override':
+            not_merged_tickets = [t for t in fake_tickets if t not in upload_tickets]
+            for t in not_merged_tickets:
+                fake_tickets.remove(t)
+        return jsonify({
+            'isSuccess': True
+        })

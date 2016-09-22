@@ -1,5 +1,6 @@
-from flask import Flask
-from flask_restful import Api, Resource, fields, marshal_with
+# -*- coding: utf-8 -*-
+from flask import Flask, jsonify
+from flask_restful import Api, Resource
 
 app = Flask(__name__)
 api = Api(app)
@@ -40,31 +41,12 @@ fake_milestones = [
     }
 ]
 
-nested_milestone = {
-    'title': fields.String,
-    'developmentStartDate': fields.String,
-    'developmentEndDate': fields.String,
-    'EvaluationStartDate': fields.String,
-    'EvaluationEndDate': fields.String,
-    'totalAvailableManDay': fields.Float,
-    'developmentAvailableManDay': fields.Float,
-    'evaluationAvailableManDay': fields.Float,
-}
-
-result_field = {
-    'isSuccess': fields.Boolean,
-    'message': fields.String,
-    'milestones': fields.Nested(nested_milestone)
-}
-
-
-@marshal_with(result_field)
 def fetch_milestone_list():
-    return {
+    return jsonify({
         'isSuccess': True,
         'message': None,
         'milestones': fake_milestones
-    }
+    })
 
 
 class MilestoneList(Resource):
