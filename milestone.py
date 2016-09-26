@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, jsonify
-from flask_restful import Api, Resource
-
-app = Flask(__name__)
-api = Api(app)
+from flask import jsonify
+from flask_restful import Resource
+import pymongo
 
 fake_milestones = [
     {
@@ -42,6 +40,7 @@ fake_milestones = [
 ]
 
 def fetch_milestone_list():
+
     return jsonify({
         'isSuccess': True,
         'message': None,
@@ -50,6 +49,12 @@ def fetch_milestone_list():
 
 
 class MilestoneList(Resource):
+    def __init__(self):
+        client = pymongo.MongoClient('localhost', 27017)
+        self.db = client.mydb
+        super(MilestoneList, self).__init__()
+
     def get(self):
+        # milestones = self.db.workloads.find({'team': team}, {'workloads.milestone': 1})
         return fetch_milestone_list()
 

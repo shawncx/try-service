@@ -1,8 +1,5 @@
-from flask import Flask
-from flask_restful import Api, Resource, fields, marshal_with
-
-app = Flask(__name__)
-api = Api(app)
+from flask_restful import Resource, fields, marshal_with
+import pymongo
 
 fake_user = [
     {
@@ -25,21 +22,17 @@ result_fields = {
 }
 
 
-@marshal_with(result_fields)
-def check_login(username, password):
-    # time.sleep(1)
-    users = filter(lambda u: u['username'] == username, fake_user)
-    if len(users) == 0 or users[0]['password'] != password:
-        return {'isSuccess': False, 'message': 'username or password not right!'}
-    else:
-        return {'isSuccess': True, 'username': username, 'team': users[0]['team']}
-
 class Login(Resource):
+    def __init__(self):
+        client = pymongo.MongoClient("localhost", 27017)
+        self.db = client.mydb
+        super(Login, self).__init__()
 
+    @marshal_with(result_fields)
     def get(self, username, password):
-        return check_login(username, password)
-
-
-
-
-
+        user_cursor = self.db.users.find({'username': username, 'password': password})
+        users = [user for user in user_cursor]
+        if len(users) == 0:
+            return {'isSuccess': False, 'message': 'username or password not right!'}
+        else:
+            return {'isSuccess': True, 'username': username, 'team': users[0]['team']}
