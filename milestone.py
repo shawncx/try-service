@@ -39,22 +39,18 @@ fake_milestones = [
     }
 ]
 
-def fetch_milestone_list():
-
-    return jsonify({
-        'isSuccess': True,
-        'message': None,
-        'milestones': fake_milestones
-    })
-
 
 class MilestoneList(Resource):
     def __init__(self):
         client = pymongo.MongoClient('localhost', 27017)
-        self.db = client.mydb
+        self.db = client.trydb
         super(MilestoneList, self).__init__()
 
     def get(self):
-        # milestones = self.db.workloads.find({'team': team}, {'workloads.milestone': 1})
-        return fetch_milestone_list()
+        milestones = self.db.milestones.find()
+        return jsonify({
+            'isSuccess': True,
+            'message': None,
+            'milestones': milestones
+        })
 

@@ -2,13 +2,6 @@
 import pymongo
 
 
-def init_collections(db):
-    db.drop_collection('workloads')
-    db.drop_collection('users')
-    db.create_collection('workloads')
-    db.create_collection('users')
-
-
 def init_users(db):
     users = [
         {
@@ -25,86 +18,106 @@ def init_users(db):
     db.users.insert_many(users)
 
 
-def init_workload(db):
+def init_milestones(db):
+    milestones = [
+        {
+            'title': '12-VerUp',
+            'developmentStartDate': '2016-09-15',
+            'developmentEndDate': '2016-11-11',
+            'evaluationStartDate': '2016-11-14',
+            'evaluationEndDate': '2016-12-09',
+            'developmentAvailableManDay': 80,
+            'evaluationAvailableManDay': 20,
+        },
+        {
+            'title': '10-PTF',
+            'developmentStartDate': '2016-09-15',
+            'developmentEndDate': '2016-11-11',
+            'evaluationStartDate': '2016-11-14',
+            'evaluationEndDate': '2016-12-09',
+            'developmentAvailableManDay': 80,
+            'evaluationAvailableManDay': 20,
+        },
+        {
+            'title': '11-PTF',
+            'developmentStartDate': '2016-09-15',
+            'developmentEndDate': '2016-11-11',
+            'evaluationStartDate': '2016-11-14',
+            'evaluationEndDate': '2016-12-09',
+            'developmentAvailableManDay': 80,
+            'evaluationAvailableManDay': 20,
+        }
+    ]
+    db.milestones.insert_many(milestones)
+
+
+def init_workloads(db):
     workloads = [
         {
             "author": "chen_xi",
             "team": "Connector",
-            "workloads": [
+            "milestone": "12-VerUp",
+            "supportRatio": 0.2,
+            "tickets": [
                 {
-                    "milestone": "12-VerUp",
-                    "developmentStartDate": "2016-09-15",
-                    "developmentEndDate": "2016-11-11",
-                    "evaluationStartDate": "2016-11-14",
-                    "evaluationEndDate": "2016-12-09",
-                    "totalAvailableManDay": 100,
-                    "developmentAvailableManDay": 80,
-                    "evaluationAvailableManDay": 20,
-                    "supportRatio": 0.2,
-                    "tickets": [
-                        {
-                            "no": 12152,
-                            "title": "[Connector Document] Create document for CWS in gitbook",
-                            "developer": "津田 薫",
-                            "evaluator": "羅 毅",
-                            "developmentManDay": 10,
-                            "developmentProgress": 0.3,
-                            "evaluationManDay": 5,
-                            "evaluationProgress": 0,
-                        },
-                        {
-                            "no": 12178,
-                            "title": "[AD/LDAP] Support comma in CN",
-                            "developer": "陳霄",
-                            "evaluator": "",
-                            "developmentManDay": 15,
-                            "developmentProgress": 0,
-                            "evaluationManDay": 10,
-                            "evaluationProgress": 0,
-                        }
-                    ]
+                    "no": 12152,
+                    "title": "[Connector Document] Create document for CWS in gitbook",
+                    "developer": "津田 薫",
+                    "evaluator": "羅 毅",
+                    "developmentManDay": 10,
+                    "developmentProgress": 0.3,
+                    "evaluationManDay": 5,
+                    "evaluationProgress": 0,
                 },
                 {
-                    "milestone": "10-PTF",
-                    "developmentStartDate": "2016-09-15",
-                    "developmentEndDate": "2016-11-11",
-                    "evaluationStartDate": "2016-11-14",
-                    "evaluationEndDate": "2016-12-09",
-                    "totalAvailableManDay": 100,
-                    "developmentAvailableManDay": 80,
-                    "evaluationAvailableManDay": 20,
-                    "supportRatio": 0.2,
-                    "tickets": []
-                },
-                {
-                    "milestone": "11-PTF",
-                    "developmentStartDate": "2016-09-15",
-                    "developmentEndDate": "2016-11-11",
-                    "evaluationStartDate": "2016-11-14",
-                    "evaluationEndDate": "2016-12-09",
-                    "totalAvailableManDay": 100,
-                    "developmentAvailableManDay": 80,
-                    "evaluationAvailableManDay": 20,
-                    "supportRatio": 0.2,
-                    "tickets": []
+                    "no": 12178,
+                    "title": "[AD/LDAP] Support comma in CN",
+                    "developer": "陳霄",
+                    "evaluator": "",
+                    "developmentManDay": 15,
+                    "developmentProgress": 0,
+                    "evaluationManDay": 10,
+                    "evaluationProgress": 0,
                 }
             ]
-        },
-        {
-            "author": "hasegawa",
-            "team": "Core",
-            "workloads": []
         }
     ]
     db.workloads.insert_many(workloads)
 
 
+def init_collections(db):
+    db.drop_collection('milestones')
+    db.drop_collection('workloads')
+    db.drop_collection('users')
+
+    db.create_collection('milestones')
+    db.create_collection('workloads')
+    db.create_collection('users')
+
+    init_users(db)
+    init_milestones(db)
+    init_workloads(db)
+
+
 if __name__ == '__main__':
     client = pymongo.MongoClient("localhost", 27017)
-    db = client.mydb
+    db = client.trydb
     # init_collections(db)
-    # init_users(db)
-    # init_workload(db)
     # print 'init finished'
-    users = db.users.find({'username': 'chen_xi1', 'password': 'worksap'})
-    print [user for user in users]
+    # aa = db.workloads.find_one({
+    #         'team': 'Connector',
+    #         'milestone': '12-VerUp',
+    #         'tickets.no': 12178
+    #     })
+    # print(aa)
+    db.workloads.update_one(
+        {
+            'team': 'Connector',
+            'milestone': '12-VerUp',
+            'tickets.no': 12178
+        },
+        {
+            '$set': {'tickets.$.developmentManDay': 5000}
+        }
+    )
+

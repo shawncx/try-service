@@ -43,12 +43,14 @@ def test_ticket_list_update_merge():
     time.sleep(1)
     print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
 
+
 def test_ticket_list_update_override():
     files = {'file': open('exportCsv.csv', 'rb')}
     data = {'milestone': '12-VerUp', 'team': 'Connector', 'mode': 'override'}
     print post('http://localhost:5000/ticketList/update', files=files, data=data).json()
     time.sleep(1)
     print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
+
 
 if __name__ == '__main__':
     # test_login()
