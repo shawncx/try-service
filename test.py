@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from requests import get, post
 import time
+import json
 
 
 def test_login():
@@ -9,54 +10,55 @@ def test_login():
 
 
 def test_milestone_list():
-    print get('http://localhost:5000/milestoneList').json()
+    print json.dumps(get('http://localhost:5000/milestoneList').json(), indent=4)
 
 
 def test_workload_list():
-    print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
-    print get('http://localhost:5000/workloadList/chen_xi/aaa').json()
+    print json.dumps(get('http://localhost:5000/workloadList/Connector/12-VerUp').json(), indent=4)
+    print json.dumps(get('http://localhost:5000/workloadList/chen_xi/aaa').json(), indent=4)
 
 
 def test_ticket_update():
-    print post('http://localhost:5000/ticket/update',
-               json={
-                   'ticket': {
-                       'milestone': '12-VerUp',
-                       'no': 999,
-                       'title': 'NNNNNNNNNNNNNNNNNNN',
-                       'developer': 'chen_xi',
-                       'evaluator': 'luo yi',
-                       'developmentManDay': 10,
-                       'developmentProgress': 0,
-                       'evaluationManDay': 10,
-                       'evaluationProgress': 0,
-                       'team': 'Connector',
-                   }
-               }).json()
-    print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
+    print json.dumps(
+        post('http://localhost:5000/ticket/update',
+             json={
+                 'team': 'Connector',
+                 'milestone': '12-VerUp',
+                 'ticket': {
+                     'no': 12178,
+                     'title': 'NNNNNNNNNNNNNNNNNNN',
+                     'developer': 'chen_xi',
+                     'evaluator': 'luo yi',
+                     'developmentManDay': 9999,
+                     'developmentProgress': 888,
+                     'evaluationManDay': 777,
+                     'evaluationProgress': 666,
+                 }
+             }).json(),
+        indent=4)
+    time.sleep(1)
+    print json.dumps(get('http://localhost:5000/workloadList/Connector/12-VerUp').json(), indent=4)
 
 
 def test_ticket_list_update_merge():
     files = {'file': open('exportCsv.csv', 'rb')}
     data = {'milestone': '12-VerUp', 'team': 'Connector', 'mode': 'merge'}
-    print post('http://localhost:5000/ticketList/update', files=files, data=data).json()
+    print json.dumps(post('http://localhost:5000/ticketList/update', files=files, data=data).json(), indent=4)
     time.sleep(1)
-    print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
+    print json.dumps(get('http://localhost:5000/workloadList/Connector/12-VerUp').json(), indent=4)
 
 
-def test_ticket_list_update_override():
-    files = {'file': open('exportCsv.csv', 'rb')}
-    data = {'milestone': '12-VerUp', 'team': 'Connector', 'mode': 'override'}
-    print post('http://localhost:5000/ticketList/update', files=files, data=data).json()
-    time.sleep(1)
-    print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
+# def test_ticket_list_update_override():
+#     files = {'file': open('exportCsv.csv', 'rb')}
+#     data = {'milestone': '12-VerUp', 'team': 'Connector', 'mode': 'override'}
+#     print post('http://localhost:5000/ticketList/update', files=files, data=data).json()
+#     time.sleep(1)
+#     print get('http://localhost:5000/workloadList/Connector/12-VerUp').json()
 
 
 if __name__ == '__main__':
     # test_login()
     # test_milestone_list()
     # test_workload_list()
-    # test_ticket_update()
-    test_ticket_list_update_merge()
-
-
+    test_ticket_update()
+    # test_ticket_list_update_merge()

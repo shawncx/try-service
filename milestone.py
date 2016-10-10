@@ -2,42 +2,17 @@
 from flask import jsonify
 from flask_restful import Resource
 import pymongo
+from marshmallow import Schema, fields
 
-fake_milestones = [
-    {
-        'title': '12-VerUp',
-        'developmentStartDate': '2016-09-15',
-        'developmentEndDate': '2016-11-11',
-        'evaluationStartDate': '2016-11-14',
-        'evaluationEndDate': '2016-12-09',
-        'totalAvailableManDay': 100,
-        'developmentAvailableManDay': 80,
-        'evaluationAvailableManDay': 20,
-        'supportRatio': 0.2,
-    },
-    {
-        'title': '10-PTF',
-        'developmentStartDate': '2016-09-15',
-        'developmentEndDate': '2016-11-11',
-        'evaluationStartDate': '2016-11-14',
-        'evaluationEndDate': '2016-12-09',
-        'totalAvailableManDay': 100,
-        'developmentAvailableManDay': 80,
-        'evaluationAvailableManDay': 20,
-        'supportRatio': 0.2,
-    },
-    {
-        'title': '11-PTF',
-        'developmentStartDate': '2016-09-15',
-        'developmentEndDate': '2016-11-11',
-        'evaluationStartDate': '2016-11-14',
-        'evaluationEndDate': '2016-12-09',
-        'totalAvailableManDay': 100,
-        'developmentAvailableManDay': 80,
-        'evaluationAvailableManDay': 20,
-        'supportRatio': 0.2,
-    }
-]
+
+class MilestoneSchema(Schema):
+    title = fields.Str()
+    developmentStartDate = fields.Str()
+    developmentEndDate = fields.Str()
+    evaluationStartDate = fields.Str()
+    evaluationEndDate = fields.Str()
+    developmentAvailableManDay = fields.Str()
+    evaluationAvailableManDay = fields.Str()
 
 
 class MilestoneList(Resource):
@@ -47,7 +22,9 @@ class MilestoneList(Resource):
         super(MilestoneList, self).__init__()
 
     def get(self):
-        milestones = self.db.milestones.find()
+        cursor = self.db.milestones.find()
+        schema = MilestoneSchema()
+        milestones = [schema.dump(m).data for m in cursor]
         return jsonify({
             'isSuccess': True,
             'message': None,

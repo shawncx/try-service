@@ -4,71 +4,19 @@ from flask_restful import reqparse, Resource
 import uuid
 from csv import DictReader
 import pymongo
-
-fake_tickets = [
-    {
-        'milestone': '12-VerUp',
-        'no': 123,
-        'title': '[AD/LDAP]CN not found',
-        'developer': 'chen_xi',
-        'evaluator': 'luo yi',
-        'developmentManDay': 10,
-        'developmentProgress': 0.3,
-        'evaluationManDay': 5,
-        'evaluationProgress': 0,
-        'team': 'Connector',
-    },
-    {
-        'milestone': '12-VerUp',
-        'no': 124,
-        'title': '[GoogleApps]Account is deleted',
-        'developer': 'luo yi',
-        'evaluator': 'chen_xi',
-        'developmentManDay': 15,
-        'developmentProgress': 0,
-        'evaluationManDay': 10,
-        'evaluationProgress': 0,
-        'team': 'Connector',
-    },
-    {
-        'milestone': '12-VerUp',
-        'no': 125,
-        'title': '[Output]Hashcode mismatch',
-        'developer': 'chen_xi',
-        'evaluator': 'luo yi',
-        'developmentManDay': 10,
-        'developmentProgress': 0,
-        'evaluationManDay': 10,
-        'evaluationProgress': 0,
-        'team': 'Connector',
-    },
-    {
-        'milestone': '12-VerUp',
-        'no': 125,
-        'title': '[Workflow]Approve blank node',
-        'developer': 'chen_xi',
-        'evaluator': 'luo yi',
-        'developmentManDay': 10,
-        'developmentProgress': 0,
-        'evaluationManDay': 10,
-        'evaluationProgress': 0,
-        'team': 'Connector',
-    },
-]
+from marshmallow import Schema, fields
+import time
 
 
-def fetch_milestion(title):
-    return {
-        'title': '12-VerUp',
-        'developmentStartDate': '2016-09-15',
-        'developmentEndDate': '2016-11-11',
-        'evaluationStartDate': '2016-11-14',
-        'evaluationEndDate': '2016-12-09',
-        'totalAvailableManDay': 100,
-        'developmentAvailableManDay': 80,
-        'evaluationAvailableManDay': 20,
-        'supportRatio': 0.2,
-    }
+class TicketSchema(Schema):
+    no = fields.Integer()
+    title = fields.Str()
+    developer = fields.Str()
+    evaluator = fields.Str()
+    developmentManDay = fields.Float()
+    developmentProgress = fields.Float()
+    evaluationManDay = fields.Float()
+    evaluationProgress = fields.Field()
 
 
 def cal_workload(workload, milestone, term):
@@ -115,17 +63,28 @@ class WorkloadList(Resource):
         self.db = client.trydb
         super(WorkloadList, self).__init__()
 
-    def get(self, team, milestone_title):
-        workload = self.db.workloads.find_one({'milestone': milestone_title}, {'team': team})
-        milestone = self.db.milestones.find_one({'title': milestone_title})
-        dev_workload = cal_workload(workload, milestone, 'development')
-        eval_workload = cal_workload(workload, milestone, 'evaluation')
-        return jsonify({
-            'isSuccess': True,
-            'tickets': workload['tickets'],
-            'developmentWorkload': dev_workload,
-            'evaluationWorkload': eval_workload,
-        })
+    def get(self, team, milestone):
+        time.sleep(3)
+        workload = self.db.workloads.find_one({'milestone': milestone, 'team': team})
+        if workload:
+            schema = TicketSchema()
+            tickets = [schema.dump(t).data for t in workload['tickets']]
+            milestone_obj = self.db.milestones.find_one({'title': milestone})
+            dev_workload = cal_workload(workload, milestone_obj, 'development')
+            eval_workload = cal_workload(workload, milestone_obj, 'evaluation')
+            return jsonify({
+                'isSuccess': True,
+                'tickets': tickets,
+                'developmentWorkload': dev_workload,
+                'evaluationWorkload': eval_workload,
+            })
+        else:
+            return jsonify({
+                'isSuccess': True,
+                'tickets': [],
+                'developmentWorkload': None,
+                'evaluationWorkload': None,
+            })
 
 
 class Ticket(Resource):
@@ -162,6 +121,11 @@ class Ticket(Resource):
 
 
 class TicketList(Resource):
+    def __init__(self):
+        client = pymongo.MongoClient('localhost', 27017)
+        self.db = client.trydb
+        super(TicketList, self).__init__()
+
     def post(self):
         import resource
         csv_file = request.files.get('ticketList')
@@ -174,7 +138,7 @@ class TicketList(Resource):
             reader = DictReader(saved_file)
             for row in reader:
                 no, title, developer, evaluator = row['チケットNo'], row['概要'], row['開発担当者'], row['評価担当者']
-                existed_ticket = filter(lambda t: t['no'] == no, workload['tickets'])
+                existed_ticket = filter(lambda t: t['no'] == int(no), workload['tickets'])
                 if len(existed_ticket):
                     existed_ticket[0]['title'] = title
                     existed_ticket[0]['developer'] = developer
