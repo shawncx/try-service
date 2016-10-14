@@ -6,6 +6,7 @@ from csv import DictReader
 import pymongo
 from marshmallow import Schema, fields
 import time
+from decimal import Decimal
 
 
 class TicketSchema(Schema):
@@ -21,7 +22,8 @@ class TicketSchema(Schema):
 
 def cal_workload(workload, milestone, term):
     support_ratio = workload['supportRatio']
-    milestone_total_available = milestone['developmentAvailableManDay'] + milestone['evaluationAvailableManDay']
+    milestone_total_available = milestone['developmentAvailableManDay'] if term == 'development' \
+        else milestone['evaluationAvailableManDay']
     personal_workloads = {}
     total_cost = 0
     for ticket in workload['tickets']:
@@ -38,14 +40,14 @@ def cal_workload(workload, milestone, term):
             personal_workloads[target_person] = {
                 'name': target_person,
                 'available': milestone_total_available,
-                'support': remain,
+                'support': round(remain, 1),
                 'cost': target_cost,
                 'remain': milestone_total_available - target_cost - remain,
             }
             total_cost += target_cost
 
     total_available = milestone_total_available * len(personal_workloads)
-    total_support = total_available * support_ratio
+    total_support = round(total_available * support_ratio, 1)
     total_remain = total_available - total_support - total_cost
 
     return {
@@ -64,7 +66,6 @@ class WorkloadList(Resource):
         super(WorkloadList, self).__init__()
 
     def get(self, team, milestone):
-        time.sleep(3)
         workload = self.db.workloads.find_one({'milestone': milestone, 'team': team})
         if workload:
             schema = TicketSchema()

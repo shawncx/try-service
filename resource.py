@@ -10,7 +10,8 @@ from flask_uploads import UploadSet, configure_uploads
 app = Flask(__name__)
 api = Api(app)
 
-app.config['UPLOADED_UPLOADS_DEST'] = '/Users/chenxiao/Documents'
+# app.config['UPLOADED_UPLOADS_DEST'] = '/Users/chenxiao/Documents'
+app.config['UPLOADED_UPLOADS_DEST'] = 'C:/Users/works/Desktop/TMP'
 uploads = UploadSet('uploads')
 configure_uploads(app, uploads)
 

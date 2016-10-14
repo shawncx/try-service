@@ -25,7 +25,7 @@ result_fields = {
 class Login(Resource):
     def __init__(self):
         client = pymongo.MongoClient("localhost", 27017)
-        self.db = client.mydb
+        self.db = client.trydb
         super(Login, self).__init__()
 
     @marshal_with(result_fields)

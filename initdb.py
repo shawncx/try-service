@@ -26,8 +26,8 @@ def init_milestones(db):
             'developmentEndDate': '2016-11-11',
             'evaluationStartDate': '2016-11-14',
             'evaluationEndDate': '2016-12-09',
-            'developmentAvailableManDay': 80,
-            'evaluationAvailableManDay': 20,
+            'developmentAvailableManDay': 37,
+            'evaluationAvailableManDay': 19,
         },
         {
             'title': '10-PTF',
@@ -59,26 +59,26 @@ def init_workloads(db):
             "milestone": "12-VerUp",
             "supportRatio": 0.2,
             "tickets": [
-                {
-                    "no": 12152,
-                    "title": "[Connector Document] Create document for CWS in gitbook",
-                    "developer": "津田 薫",
-                    "evaluator": "羅 毅",
-                    "developmentManDay": 10,
-                    "developmentProgress": 0.3,
-                    "evaluationManDay": 5,
-                    "evaluationProgress": 0,
-                },
-                {
-                    "no": 12178,
-                    "title": "[AD/LDAP] Support comma in CN",
-                    "developer": "陳霄",
-                    "evaluator": "",
-                    "developmentManDay": 15,
-                    "developmentProgress": 0,
-                    "evaluationManDay": 10,
-                    "evaluationProgress": 0,
-                }
+                # {
+                #     "no": 12152,
+                #     "title": "[Connector Document] Create document for CWS in gitbook",
+                #     "developer": "津田 薫",
+                #     "evaluator": "羅 毅",
+                #     "developmentManDay": 10,
+                #     "developmentProgress": 0.3,
+                #     "evaluationManDay": 5,
+                #     "evaluationProgress": 0,
+                # },
+                # {
+                #     "no": 12178,
+                #     "title": "[AD/LDAP] Support comma in CN",
+                #     "developer": "陳霄",
+                #     "evaluator": "",
+                #     "developmentManDay": 15,
+                #     "developmentProgress": 0,
+                #     "evaluationManDay": 10,
+                #     "evaluationProgress": 0,
+                # }
             ]
         }
     ]
