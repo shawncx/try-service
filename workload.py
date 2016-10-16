@@ -5,8 +5,6 @@ import uuid
 from csv import DictReader
 import pymongo
 from marshmallow import Schema, fields
-import time
-from decimal import Decimal
 
 
 class TicketSchema(Schema):
@@ -29,25 +27,28 @@ def cal_workload(workload, milestone, term):
     for ticket in workload['tickets']:
         (target_person, target_cost) = (ticket['developer'], ticket['developmentManDay']) if term == 'development' \
             else (ticket['evaluator'], ticket['evaluationManDay'])
-        if personal_workloads.get(target_person):
-            personal_workloads[target_person]['available'] = milestone_total_available
-            personal_workloads[target_person]['support'] = milestone_total_available * support_ratio
-            personal_workloads[target_person]['cost'] += target_cost
-            personal_workloads[target_person]['remain'] -= target_cost
-            total_cost += target_cost
-        else:
-            remain = milestone_total_available * support_ratio
-            personal_workloads[target_person] = {
-                'name': target_person,
-                'available': milestone_total_available,
-                'support': round(remain, 1),
-                'cost': target_cost,
-                'remain': milestone_total_available - target_cost - remain,
-            }
-            total_cost += target_cost
+        developers = target_person.split(u',')
+        for developer in developers:
+            if len(filter(lambda d: developer == d, [u'津田 薫', u'羅 毅', u'陳霄', u'李 旭'])) == 0:
+                continue
+            target_cost /= len(developers)
+            if personal_workloads.get(developer):
+                personal_workloads[developer]['cost'] += target_cost
+                personal_workloads[developer]['remain'] -= target_cost
+                total_cost += target_cost
+            else:
+                remain = milestone_total_available * support_ratio
+                personal_workloads[developer] = {
+                    'name': developer,
+                    'available': milestone_total_available,
+                    'support': remain,
+                    'cost': target_cost,
+                    'remain': milestone_total_available - target_cost - remain,
+                }
+                total_cost += target_cost
 
     total_available = milestone_total_available * len(personal_workloads)
-    total_support = round(total_available * support_ratio, 1)
+    total_support = total_available * support_ratio
     total_remain = total_available - total_support - total_cost
 
     return {
@@ -160,3 +161,6 @@ class TicketList(Resource):
         return jsonify({
             'isSuccess': True
         })
+
+if __name__ == '__main__':
+    print u'陳霄,長谷川 健博'.split(u',')
