@@ -32,24 +32,24 @@ def cal_workload(workload, milestone, term):
         for developer in developers:
             if len(filter(lambda d: developer == d, [u'津田 薫', u'羅 毅', u'陳霄', u'李 旭'])) == 0:
                 continue
-            target_cost /= len(developers)
-            target_remained_manday = target_cost - target_cost * target_progress
+            personal_target_cost = target_cost / len(developers)
+            personal_remained_manday = personal_target_cost - personal_target_cost * target_progress
             if personal_workloads.get(developer):
-                personal_workloads[developer]['cost'] += target_cost
-                personal_workloads[developer]['remain'] -= target_cost
-                personal_workloads[developer]['remainedManDay'] += target_remained_manday
+                personal_workloads[developer]['cost'] += personal_target_cost
+                personal_workloads[developer]['remain'] -= personal_target_cost
+                personal_workloads[developer]['remainedManDay'] += personal_remained_manday
             else:
                 remain = milestone_total_available * support_ratio
                 personal_workloads[developer] = {
                     'name': developer,
                     'available': milestone_total_available,
                     'support': remain,
-                    'cost': target_cost,
-                    'remain': milestone_total_available - target_cost - remain,
-                    'remainedManDay': target_remained_manday,
+                    'cost': personal_target_cost,
+                    'remain': milestone_total_available - personal_target_cost - remain,
+                    'remainedManDay': personal_remained_manday,
                 }
-            total_cost += target_cost
-            total_remain_manday += (target_cost - target_cost * target_progress)
+            total_cost += personal_target_cost
+            total_remain_manday += (personal_target_cost - personal_target_cost * target_progress)
 
     total_available = milestone_total_available * len(personal_workloads)
     total_support = total_available * support_ratio
