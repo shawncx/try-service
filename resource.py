@@ -18,7 +18,7 @@ configure_uploads(app, uploads)
 api.add_resource(Login, '/login/<string:username>/<string:password>')
 api.add_resource(MilestoneList, '/milestoneList')
 api.add_resource(WorkloadList, '/workloadList/<string:team>/<string:milestone>')
-api.add_resource(Ticket, '/ticket/update')
+api.add_resource(Ticket, '/ticket/<string:team>/<string:milestone>/<int:no>')
 api.add_resource(TicketList, '/ticketList/update')
 
 

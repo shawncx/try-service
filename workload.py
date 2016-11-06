@@ -6,7 +6,6 @@ from csv import DictReader
 import pymongo
 from marshmallow import Schema, fields
 
-
 class TicketSchema(Schema):
     no = fields.Integer()
     title = fields.Str()
@@ -24,18 +23,21 @@ def cal_workload(workload, milestone, term):
         else milestone['evaluationAvailableManDay']
     personal_workloads = {}
     total_cost = 0
+    total_remain_manday = 0
     for ticket in workload['tickets']:
-        (target_person, target_cost) = (ticket['developer'], ticket['developmentManDay']) if term == 'development' \
-            else (ticket['evaluator'], ticket['evaluationManDay'])
+        (target_person, target_cost, target_progress) = (
+            ticket['developer'], ticket['developmentManDay'], ticket['developmentProgress']) if term == 'development' \
+            else (ticket['evaluator'], ticket['evaluationManDay'], ticket['evaluationProgress'])
         developers = target_person.split(u',')
         for developer in developers:
             if len(filter(lambda d: developer == d, [u'津田 薫', u'羅 毅', u'陳霄', u'李 旭'])) == 0:
                 continue
             target_cost /= len(developers)
+            target_remained_manday = target_cost - target_cost * target_progress
             if personal_workloads.get(developer):
                 personal_workloads[developer]['cost'] += target_cost
                 personal_workloads[developer]['remain'] -= target_cost
-                total_cost += target_cost
+                personal_workloads[developer]['remainedManDay'] += target_remained_manday
             else:
                 remain = milestone_total_available * support_ratio
                 personal_workloads[developer] = {
@@ -44,8 +46,10 @@ def cal_workload(workload, milestone, term):
                     'support': remain,
                     'cost': target_cost,
                     'remain': milestone_total_available - target_cost - remain,
+                    'remainedManDay': target_remained_manday,
                 }
-                total_cost += target_cost
+            total_cost += target_cost
+            total_remain_manday += (target_cost - target_cost * target_progress)
 
     total_available = milestone_total_available * len(personal_workloads)
     total_support = total_available * support_ratio
@@ -56,6 +60,7 @@ def cal_workload(workload, milestone, term):
         'totalSupport': total_support,
         'totalCost': total_cost,
         'totalRemain': total_remain,
+        'totalRemainedManDay': total_remain_manday,
         'personalWorkloads': personal_workloads.values(),
     }
 
@@ -94,19 +99,17 @@ class Ticket(Resource):
         client = pymongo.MongoClient('localhost', 27017)
         self.db = client.trydb
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('team', type=str, location='json')
-        self.parser.add_argument('milestone', type=str, location='json')
         self.parser.add_argument('ticket', type=dict, location='json')
         super(Ticket, self).__init__()
 
-    def post(self):
+    def put(self, team, milestone, no):
         args = self.parser.parse_args()
-        team, milestone, ticket = args['team'], args['milestone'], args['ticket']
+        ticket = args['ticket']
         self.db.workloads.update_one(
             {
                 'team': team,
                 'milestone': milestone,
-                'tickets.no': ticket['no']
+                'tickets.no': no
             },
             {
                 '$set': {
@@ -117,6 +120,23 @@ class Ticket(Resource):
                 }
             }
         )
+        return jsonify({
+            'isSuccess': True
+        })
+
+    def delete(self, team, milestone, no):
+        self.db.workloads.update_one(
+            {
+                'team': team,
+                'milestone': milestone,
+            },
+            {
+                '$pull': {
+                    'tickets': {
+                        'no': no
+                    }
+                }
+            })
         return jsonify({
             'isSuccess': True
         })
@@ -161,6 +181,7 @@ class TicketList(Resource):
         return jsonify({
             'isSuccess': True
         })
+
 
 if __name__ == '__main__':
     print u'陳霄,長谷川 健博'.split(u',')

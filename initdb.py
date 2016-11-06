@@ -102,7 +102,7 @@ def init_collections(db):
 if __name__ == '__main__':
     client = pymongo.MongoClient("localhost", 27017)
     db = client.trydb
-    init_collections(db)
+    # init_collections(db)
     print 'init finished'
     # aa = db.workloads.find_one({
     #         'team': 'Connector',
@@ -120,4 +120,22 @@ if __name__ == '__main__':
     #         '$set': {'tickets.$.developmentManDay': 5000}
     #     }
     # )
+    db.workloads.update_one(
+        {
+            'team': 'Connector',
+            'milestone': '12-VerUp',
+        },
+        {
+            '$pull': {
+                'tickets': {
+                    'no': 6377
+                }
+            }
+        })
+    workload = db.workloads.find_one(
+        {
+            'team': 'Connector',
+            'milestone': '12-VerUp',
+        })
+    print(len(workload['tickets']))
 
