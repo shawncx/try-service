@@ -30,7 +30,7 @@ def cal_workload(workload, milestone, term):
             else (ticket['evaluator'], ticket['evaluationManDay'], ticket['evaluationProgress'])
         developers = target_person.split(u',')
         for developer in developers:
-            if len(filter(lambda d: developer == d, [u'津田 薫', u'羅 毅', u'陳霄', u'李 旭'])) == 0:
+            if len(filter(lambda d: developer == d, [u'津田 薫', u'羅 毅', u'陳霄', u'李 旭', u'ユー チン'])) == 0:
                 continue
             personal_target_cost = target_cost / len(developers)
             personal_remained_manday = personal_target_cost - personal_target_cost * target_progress
